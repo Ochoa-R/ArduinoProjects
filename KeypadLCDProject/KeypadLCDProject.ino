@@ -5,7 +5,6 @@
 #define pir 6
 
 static uint8_t index = 0;
-static bool codeState = false;
 static bool alarmState = false;
 const byte green = 0x20;
 const byte red = 0x10;
