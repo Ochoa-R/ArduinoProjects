@@ -4,7 +4,7 @@
 
 #define ledGreen 3
 #define ledRed 2
-#define button 6
+#define pir 6
 
 static uint8_t index = 0;
 static bool codeState = false;
@@ -65,7 +65,7 @@ void setup()
 void loop()
 {
   // PUSH BUTTON TO SIMULATE SENSOR DETECTION, CHECK IF ALARM IS ALREADY TRIGGERED
-  if(!digitalRead(button) && alarmState)
+  if(digitalRead(pir) && alarmState)
   {
     // SET ALARM AS TRIGGERED, TURN ON RED LED
     marie.clear();
