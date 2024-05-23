@@ -2,13 +2,13 @@
 #include <LiquidCrystal_I2C.h>
 #include <Keypad.h>
 
-#define ledGreen 3
-#define ledRed 2
 #define pir 6
 
 static uint8_t index = 0;
 static bool codeState = false;
 static bool alarmState = false;
+const byte green = 0x20;
+const byte red = 0x10;
 const byte ROWS = 4; 
 const byte COLS = 4;
 char hexaKeys[ROWS][COLS] = {
@@ -59,7 +59,7 @@ void setup()
   alarmState = true;
   marie.clear();
   marie.print("Alarm set");
-  PORTE = 0x20;
+  PORTE = green;
 }
 
 void loop()
@@ -71,7 +71,7 @@ void loop()
     marie.clear();
     marie.print("ALARM TRIPPED!");
     alarmState = false;
-    PORTE = 0x10;
+    PORTE = red;
     delay(1000);
 
     // LOOP UNTIL THE CORRECT CODE IS INPUTTED
@@ -91,7 +91,7 @@ void loop()
         marie.clear();
         marie.setCursor(0,0);
         marie.print("Correct Code");
-        PORTE = 0x20;
+        PORTE = green;
         alarmState = true;
         delay(1000);
         marie.clear();
