@@ -115,7 +115,7 @@ bool isRightCode()
   return true;
 }
 
-bool getKeys(char arr[])
+void getKeys(char arr[])
 {
   marie.clear();
   marie.setCursor(0,0);
@@ -137,7 +137,7 @@ bool getKeys(char arr[])
       marie.setCursor(0,0);
       marie.noCursor();
       index = 0;
-      return true;
+      return;
     }
   }
 }
