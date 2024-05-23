@@ -32,7 +32,7 @@ const int d7 = 12;*/
 
 //For LCD w/ I2C:
 LiquidCrystal_I2C marie(0x27, 16, 2);
-Keypad callie = Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS); 
+Keypad callie(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS); 
 
 bool isRightCode();
 bool getKeys(char arr[]);
