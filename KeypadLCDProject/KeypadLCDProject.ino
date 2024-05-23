@@ -6,61 +6,57 @@
 #define ledRed 2
 #define button 6
 
-//for Standard LCD:
-/*const int rs = 7;
-const int en = 8;
-const int d4 = 9;
-const int d5 = 10;
-const int d6 = 11;
-const int d7 = 12;
-LiquidCrystal marie(rs, en, d4, d5, d6, d7);*/
-
-//For LCD w/ I2C:
-LiquidCrystal_I2C marie(0x27, 16, 2);
-
-const byte ROWS = 4; 
-const byte COLS = 4; 
-char userIn[4] = {0, 0, 0, 0};
-char codeCheck[4] = {'1', '2', '3', '4'};
 static uint8_t index = 0;
 static bool codeState = false;
 static bool alarmState = false;
-
+const byte ROWS = 4; 
+const byte COLS = 4;
 char hexaKeys[ROWS][COLS] = {
   {'1', '2', '3', 'A'},
   {'4', '5', '6', 'B'},
   {'7', '8', '9', 'C'},
   {'*', '0', '#', 'D'}
 };
-
 byte rowPins[ROWS] = {A8, A9, A10, A11}; 
 byte colPins[COLS] = {A12, A13, A14, A15}; 
+char userIn[4] = {0, 0, 0, 0};
+char codeCheck[4] = {'1', '2', '3', '4'};
 
+//for Standard LCD:
+/*const int rs = 7;
+const int en = 8;
+const int d4 = 9;
+const int d5 = 10;
+const int d6 = 11;
+const int d7 = 12;*/
+
+//For LCD w/ I2C:
+LiquidCrystal_I2C marie(0x27, 16, 2);
 Keypad callie = Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS); 
 
-bool isRightCode(uint8_t index);
-
-bool getKeys(uint8_t index);
-
-const char bald[] = {'B', 'A', 'L', 'D', '!'};
+bool isRightCode();
+bool getKeys(char arr[]);
 
 void setup() 
 {
+  //INITIALIZE LCD DISPLAY
   //marie.begin(16, 2);
   marie.init();
   marie.backlight();
   marie.clear();
   marie.setCursor(0, 0);
-  //marie.print("Time passed:");
-  
+
+  // H INPUT AND PULLUP, E OUTPUT
   DDRH = (0<<PH3);
   DDRE = (1<<PE4)|(1<<PE5);
   PORTH = (1<<PH3);
   PORTE = 0x00;
 
+  // SET CODE TO RESET ALARM WHEN TRIGGERED
   marie.print("Set alarm code");
   delay(1000);
-  alarmState = getKeys(index, codeCheck);
+  getKeys(codeCheck);
+  alarmState = true;
   marie.clear();
   marie.print("Alarm set");
   PORTE = 0x20;
@@ -68,17 +64,21 @@ void setup()
 
 void loop()
 {
+  // PUSH BUTTON TO SIMULATE SENSOR DETECTION, CHECK IF ALARM IS ALREADY TRIGGERED
   if(!digitalRead(button) && alarmState)
   {
+    // SET ALARM AS TRIGGERED, TURN ON RED LED
     marie.clear();
     marie.print("ALARM TRIPPED!");
     alarmState = false;
     PORTE = 0x10;
     delay(1000);
+
+    // LOOP UNTIL THE CORRECT CODE IS INPUTTED
     while(true)
     {
-      getKeys(index, userIn);
-      if(!isRightCode(index))
+      getKeys(userIn);
+      if(!isRightCode())
       {
         marie.clear();
         marie.setCursor(0,0);
@@ -102,7 +102,7 @@ void loop()
   }
 }
 
-bool isRightCode(uint8_t index)
+bool isRightCode()
 {
   for(;index < 4;++index)
   {
@@ -112,10 +112,11 @@ bool isRightCode(uint8_t index)
     }
     userIn[index] = 0;
   }
+  index = 0;
   return true;
 }
 
-bool getKeys(uint8_t index, char arr[])
+bool getKeys(char arr[])
 {
   marie.clear();
   marie.setCursor(0,0);
