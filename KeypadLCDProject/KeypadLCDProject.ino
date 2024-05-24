@@ -125,7 +125,7 @@ void getKeys(char arr[])
   {
   char customKey = callie.getKey();
   marie.cursor();
-    if(customKey && (customKey != '#') && (index < 4))
+    if(customKey &&  (index < 4))
     {
       marie.print(customKey);
       arr[index] = customKey;
