@@ -1,11 +1,13 @@
+//If you put callie and marie together, you get calamari :D
+
 //#include <LiquidCrystal.h>
 #include <LiquidCrystal_I2C.h>
 #include <Keypad.h>
 
-#define pir 6
+#define pir 4
 
-static uint8_t index = 0;
-static bool alarmState = false;
+const uint8_t codeLength = 4;
+static bool alarmState = true;
 const byte green = 0x20;
 const byte red = 0x10;
 const byte ROWS = 4; 
@@ -18,8 +20,8 @@ char hexaKeys[ROWS][COLS] = {
 };
 byte rowPins[ROWS] = {A8, A9, A10, A11}; 
 byte colPins[COLS] = {A12, A13, A14, A15}; 
-char userIn[4] = {0, 0, 0, 0};
-char codeCheck[4] = {'1', '2', '3', '4'};
+String userIn;
+String codeCheck;
 
 //for Standard LCD:
 /*const int rs = 7;
@@ -27,14 +29,18 @@ const int en = 8;
 const int d4 = 9;
 const int d5 = 10;
 const int d6 = 11;
-const int d7 = 12;*/
+const int d7 = 12;
+LiquidCrystal marie(rs, en, d4, d5, d6, d7);*/
 
 //For LCD w/ I2C:
 LiquidCrystal_I2C marie(0x27, 16, 2);
 Keypad callie(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS); 
 
 bool isRightCode();
-bool getKeys(char arr[]);
+void getKeys(String& calamari, uint8_t cap);
+void setAlarm();
+void wrongCode();
+void rightCode();
 
 void setup() 
 {
@@ -45,56 +51,66 @@ void setup()
   marie.clear();
   marie.setCursor(0, 0);
 
-  // H INPUT AND PULLUP, E OUTPUT
-  DDRH = (0<<PH3);
+  //G INPUT AND PULLUP, E OUTPUT
+  DDRG = (0<<PG5);
   DDRE = (1<<PE4)|(1<<PE5);
-  PORTH = (1<<PH3);
+  PORTG = (1<<PG5);
   PORTE = 0x00;
 
   // SET CODE TO RESET ALARM WHEN TRIGGERED
   marie.print("Set alarm code");
   delay(1000);
-  getKeys(codeCheck);
-  alarmState = true;
   marie.clear();
-  marie.print("Alarm set");
+  marie.setCursor(0,0);
+  marie.print("Put 4-digit code");
+  getKeys(codeCheck, codeLength);
+  marie.clear();
+  marie.print("Code Set");
   PORTE = green;
+  delay(1000);
+  
 }
 
 void loop()
 {
-  // PIR SENSOR TO DETECT MOTION, CHECK IF ALARM IS ALREADY TRIGGERED
-  if(digitalRead(pir) && alarmState)
+  //CHECK IF ALARM IS NOT SET, ENABLE ALARM VIA * PRESS
+  if(alarmState)
   {
-    // SET ALARM AS TRIGGERED, TURN ON RED LED
     marie.clear();
-    marie.print("ALARM TRIPPED!");
-    alarmState = false;
-    PORTE = red;
-    delay(1000);
-
-    // LOOP UNTIL THE CORRECT CODE IS INPUTTED
+    marie.print("Press * to set");
     while(true)
     {
-      getKeys(userIn);
+      if(callie.getKey() == '*')
+      {
+        setAlarm();
+        break;
+      }
+    }
+  }
+  // PIR SENSOR TO DETECT MOTION, CHECK IF ALARM IS SET
+  if(digitalRead(pir) && !alarmState)
+  {
+    // SET ALARM AS TRIGGERED
+    marie.clear();
+    marie.print("ALARM TRIPPED!");
+    alarmState = true;
+    delay(1000);
+
+    // LOOP UNTIL THE CORRECT CODE IS INPUTTED, THEN DISARM ALARM
+    while(true)
+    {
+      marie.clear();
+      marie.setCursor(0,0);
+      marie.print("Put 4-digit code");
+      getKeys(userIn, codeLength);
       if(!isRightCode())
       {
-        marie.clear();
-        marie.setCursor(0,0);
-        marie.print("Wrong code");
-        delay(1000);
+        wrongCode();
         continue;
       }
       else
       {
-        marie.clear();
-        marie.setCursor(0,0);
-        marie.print("Correct Code");
-        PORTE = green;
-        alarmState = true;
-        delay(1000);
-        marie.clear();
-        marie.print("Alarm set");
+        rightCode();
         break;
       }
     }
@@ -103,41 +119,55 @@ void loop()
 
 bool isRightCode()
 {
-  for(;index < 4;++index)
-  {
-    if(userIn[index] != codeCheck[index])
-    {
-      return false;
-    }
-    userIn[index] = 0;
-  }
-  index = 0;
-  return true;
+  return userIn.equals(codeCheck);
 }
 
-void getKeys(char arr[])
+void getKeys(String& calamari, uint8_t cap)
 {
-  marie.clear();
-  marie.setCursor(0,0);
-  marie.print("Enter Code:");
   marie.setCursor(0,1);
   while(true)
   {
   char customKey = callie.getKey();
   marie.cursor();
-    if(customKey && (index < 4))
+    if(customKey && (customKey != '#') && (calamari.length() < cap))
     {
       marie.print(customKey);
-      arr[index] = customKey;
-      index = ++index;
+      calamari += customKey;
     }
-    if(customKey == '#')
+    if((customKey == '#') && (calamari.length() == cap))
     {
       marie.clear();
       marie.setCursor(0,0);
       marie.noCursor();
-      index = 0;
       return;
     }
   }
+}
+
+void wrongCode()
+{
+  marie.clear();
+  marie.setCursor(0,0);
+  userIn.remove(0, 4);
+  marie.print("Wrong code");
+  delay(1000);
+}
+
+void rightCode()
+{
+  marie.clear();
+  marie.setCursor(0,0);
+  userIn.remove(0, 4);
+  marie.print("Correct code");
+  PORTE = green;
+  alarmState = true;
+  delay(1000);
+}
+
+void setAlarm()
+{
+  marie.clear();
+  marie.print("Alarm set");
+  PORTE = red;
+  alarmState = false;
 }
