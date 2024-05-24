@@ -1,5 +1,4 @@
 //If you put callie and marie together, you get calamari :D
-//Prototype design: https://projects.cirkitdesigner.com/view-maker-hub-project/30749
 
 //#include <LiquidCrystal.h>
 #include <LiquidCrystal_I2C.h>
@@ -8,7 +7,9 @@
 #define pir 4
 
 const uint8_t codeLength = 4;
+static int chances = 0;
 static bool alarmState = true;
+static bool fail = false;
 const byte green = 0x20;
 const byte red = 0x10;
 const byte ROWS = 4; 
@@ -38,8 +39,11 @@ LiquidCrystal_I2C marie(0x27, 16, 2);
 Keypad callie(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS); 
 
 bool isRightCode();
+bool isDetected();
 void getKeys(String& calamari, uint8_t cap);
+void askSet();
 void setAlarm();
+void tripAlarm();
 void wrongCode();
 void rightCode();
 
@@ -66,7 +70,7 @@ void setup()
   marie.print("Put 4-digit code");
   getKeys(codeCheck, codeLength);
   marie.clear();
-  marie.print("Code Set");
+  marie.print("Code set");
   PORTE = green;
   delay(1000);
   
@@ -77,24 +81,39 @@ void loop()
   //CHECK IF ALARM IS NOT SET, ENABLE ALARM VIA * PRESS
   if(alarmState)
   {
-    marie.clear();
-    marie.print("Press * to set");
+    askSet();
     while(true)
     {
-      if(callie.getKey() == '*')
+      marie.clear();
+      marie.setCursor(0,0);
+      marie.print("Put 4-digit code");
+      getKeys(userIn, codeLength);
+      if(!isRightCode())
       {
+        wrongCode();
+        chances = ++chances;
+        if(chances >= 3)
+        {
+          alarmState = false;
+          fail = true;
+          break;
+        }
+        continue;
+      }
+      else
+      {
+        rightCode();
         setAlarm();
+        chances = 0;
         break;
       }
     }
   }
   // PIR SENSOR TO DETECT MOTION, CHECK IF ALARM IS SET
-  if(digitalRead(pir) && !alarmState)
+  if(isDetected() || isFailed())
   {
     // SET ALARM AS TRIGGERED
-    marie.clear();
-    marie.print("ALARM TRIPPED!");
-    delay(1000);
+    tripAlarm();
 
     // LOOP UNTIL THE CORRECT CODE IS INPUTTED, THEN DISARM ALARM
     while(true)
@@ -111,6 +130,7 @@ void loop()
       else
       {
         rightCode();
+        chances = 0;
         break;
       }
     }
@@ -120,6 +140,16 @@ void loop()
 bool isRightCode()
 {
   return userIn.equals(codeCheck);
+}
+
+bool isDetected()
+{
+  return digitalRead(pir) && !alarmState;
+}
+
+bool isFailed()
+{
+  return !alarmState && fail;
 }
 
 void getKeys(String& calamari, uint8_t cap)
@@ -170,4 +200,24 @@ void setAlarm()
   marie.print("Alarm set");
   PORTE = red;
   alarmState = false;
+}
+
+void tripAlarm()
+{
+  marie.clear();
+  marie.print("ALARM TRIPPED!");
+  alarmState = true;
+  fail = false;
+  PORTE = red;
+  delay(1000);
+}
+void askSet()
+{
+  marie.clear();
+  marie.print("Press * to set");
+  while(true)
+  {
+    if(callie.getKey() == '*')
+      return;
+  }
 }
