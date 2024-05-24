@@ -211,6 +211,7 @@ void tripAlarm()
   PORTE = red;
   delay(1000);
 }
+
 void askSet()
 {
   marie.clear();
