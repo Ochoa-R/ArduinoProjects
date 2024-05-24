@@ -94,7 +94,6 @@ void loop()
     // SET ALARM AS TRIGGERED
     marie.clear();
     marie.print("ALARM TRIPPED!");
-    alarmState = true;
     delay(1000);
 
     // LOOP UNTIL THE CORRECT CODE IS INPUTTED, THEN DISARM ALARM
