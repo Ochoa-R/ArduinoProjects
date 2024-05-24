@@ -1,4 +1,5 @@
 //If you put callie and marie together, you get calamari :D
+//Prototype design: https://projects.cirkitdesigner.com/view-maker-hub-project/30749
 
 //#include <LiquidCrystal.h>
 #include <LiquidCrystal_I2C.h>
