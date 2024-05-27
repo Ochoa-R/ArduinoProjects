@@ -5,6 +5,8 @@
 #include <Keypad.h>
 
 #define pir 4
+#define clap 39
+#define speak 5
 
 const uint8_t codeLength = 4;
 static int chances = 0;
@@ -20,8 +22,14 @@ char hexaKeys[ROWS][COLS] = {
   {'7', '8', '9', 'C'},
   {'*', '0', '#', 'D'}
 };
+
+//For I2C CIRCUIT:
 byte rowPins[ROWS] = {A8, A9, A10, A11}; 
 byte colPins[COLS] = {A12, A13, A14, A15}; 
+// FOR CLASS CIRCUIT:
+//byte rowPins[ROWS] = {A15, A14, A13, A12}; 
+//byte colPins[COLS] = {A11, A10, A9, A8}; 
+
 String userIn;
 String codeCheck;
 
@@ -40,12 +48,14 @@ Keypad callie(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS);
 
 bool isRightCode();
 bool isDetected();
+bool isFailed();
 void getKeys(String& calamari, uint8_t cap);
 void askSet();
 void setAlarm();
 void tripAlarm();
 void wrongCode();
 void rightCode();
+void beepPress();
 
 void setup() 
 {
@@ -57,9 +67,9 @@ void setup()
   marie.setCursor(0, 0);
 
   //G INPUT AND PULLUP, E OUTPUT
-  DDRG = (0<<PG5);
-  DDRE = (1<<PE4)|(1<<PE5);
-  PORTG = (1<<PG5);
+  DDRG = (0<<PG2)|(0<<PG5);
+  DDRE = (1<<PE3)|(1<<PE4)|(1<<PE5);
+  PORTG = (1<<PG2)|(1<<PG5);
   PORTE = 0x00;
 
   // SET CODE TO RESET ALARM WHEN TRIGGERED
@@ -70,7 +80,7 @@ void setup()
   marie.print("Put 4-digit code");
   getKeys(codeCheck, codeLength);
   marie.clear();
-  marie.print("Code set");
+  marie.print("Code Set");
   PORTE = green;
   delay(1000);
   
@@ -104,12 +114,11 @@ void loop()
       {
         rightCode();
         setAlarm();
-        chances = 0;
         break;
       }
     }
   }
-  // PIR SENSOR TO DETECT MOTION, CHECK IF ALARM IS SET
+  // PIR SENSOR TO DETECT MOTION OR FAILED TO INPUT CODE 3 TIMES, CHECK IF ALARM IS SET
   if(isDetected() || isFailed())
   {
     // SET ALARM AS TRIGGERED
@@ -130,7 +139,6 @@ void loop()
       else
       {
         rightCode();
-        chances = 0;
         break;
       }
     }
@@ -144,7 +152,7 @@ bool isRightCode()
 
 bool isDetected()
 {
-  return digitalRead(pir) && !alarmState;
+  return (digitalRead(pir) && !alarmState);
 }
 
 bool isFailed()
@@ -161,11 +169,13 @@ void getKeys(String& calamari, uint8_t cap)
   marie.cursor();
     if(customKey && (customKey != '#') && (calamari.length() < cap))
     {
+      beepPress();
       marie.print(customKey);
       calamari += customKey;
     }
     if((customKey == '#') && (calamari.length() == cap))
     {
+      beepPress();
       marie.clear();
       marie.setCursor(0,0);
       marie.noCursor();
@@ -189,8 +199,10 @@ void rightCode()
   marie.setCursor(0,0);
   userIn.remove(0, 4);
   marie.print("Correct code");
+  digitalWrite(speak, LOW);
   PORTE = green;
   alarmState = true;
+  chances = 0;
   delay(1000);
 }
 
@@ -206,12 +218,11 @@ void tripAlarm()
 {
   marie.clear();
   marie.print("ALARM TRIPPED!");
-  alarmState = true;
   fail = false;
   PORTE = red;
+  analogWrite(speak, 63);
   delay(1000);
 }
-
 void askSet()
 {
   marie.clear();
@@ -219,6 +230,19 @@ void askSet()
   while(true)
   {
     if(callie.getKey() == '*')
+    {
+      beepPress();
       return;
+    }
+  }
+}
+
+void beepPress()
+{
+  if(alarmState)
+  {
+  digitalWrite(speak, HIGH);
+  delay(10);
+  digitalWrite(speak, LOW);
   }
 }
