@@ -8,10 +8,10 @@
 #define clap 39
 #define speak 5
 
-const uint8_t codeLength = 4;
-static int chances = 0;
 static bool alarmState = true;
 static bool fail = false;
+const byte codeLength = 4;
+static byte chances = 0;
 const byte green = 0x20;
 const byte red = 0x10;
 const byte ROWS = 4; 
