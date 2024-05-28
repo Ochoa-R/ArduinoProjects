@@ -75,9 +75,6 @@ void setup()
   // SET CODE TO RESET ALARM WHEN TRIGGERED
   marie.print("Set alarm code");
   delay(1000);
-  marie.clear();
-  marie.setCursor(0,0);
-  marie.print("Put 4-digit code");
   getKeys(codeCheck, codeLength);
   marie.clear();
   marie.print("Code Set");
@@ -94,9 +91,6 @@ void loop()
     askSet();
     while(true)
     {
-      marie.clear();
-      marie.setCursor(0,0);
-      marie.print("Put 4-digit code");
       getKeys(userIn, codeLength);
       if(!isRightCode())
       {
@@ -127,9 +121,6 @@ void loop()
     // LOOP UNTIL THE CORRECT CODE IS INPUTTED, THEN DISARM ALARM
     while(true)
     {
-      marie.clear();
-      marie.setCursor(0,0);
-      marie.print("Put 4-digit code");
       getKeys(userIn, codeLength);
       if(!isRightCode())
       {
@@ -162,6 +153,9 @@ bool isFailed()
 
 void getKeys(String& calamari, uint8_t cap)
 {
+  marie.clear();
+  marie.setCursor(0,0);
+  marie.print("Put 4-digit code");
   marie.setCursor(0,1);
   while(true)
   {
