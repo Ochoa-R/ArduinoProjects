@@ -5,7 +5,6 @@
 
 // MACROS FOR SENSORS AND SPEAKER PINS
 #define pirSig 4
-#define pirV 1
 #define soundSig 39
 #define speak 5
 
@@ -74,14 +73,14 @@ void beepPress();
 
 void setup() 
 {
-  //INITIALIZE LCD DISPLAY
+  // INITIALIZE LCD DISPLAY
   //marie.begin(16, 2);
   marie.init();
   marie.backlight();
   marie.clear();
   marie.setCursor(0, 0);
 
-  //G INPUT AND PULLUP, E OUTPUT
+  // SENSOR PINS INPUT AND PULLUP, LED AND BUZZER PINS OUTPUT
   DDRG = (0<<PG2)|(0<<PG5);
   DDRE = (1<<PE1)|(1<<PE3)|(1<<PE4)|(1<<PE5);
   PORTG = (1<<PG2)|(1<<PG5);
@@ -99,7 +98,7 @@ void setup()
 
 void loop()
 {
-  //CHECK IF ALARM IS NOT SET, ENABLE ALARM VIA * PRESS
+  // CHECK IF ALARM IS NOT SET, ENABLE ALARM VIA * PRESS
   if(alarmState)
   {
     askSet();
@@ -126,11 +125,11 @@ void loop()
       }
     }
   }
-  // PIR SENSOR TO DETECT MOTION OR FAILED TO INPUT CODE 3 TIMES, CHECK IF ALARM IS SET
   if(isAlert())
   {
     // SET ALARM AS TRIGGERED
     tripAlarm();
+    askSet();
 
     // LOOP UNTIL THE CORRECT CODE IS INPUTTED, THEN DISARM ALARM
     while(true)
@@ -150,10 +149,7 @@ void loop()
   }
 }
 
-bool isRightCode()
-{
-  return userIn.equals(codeCheck);
-}
+bool isRightCode(){ return userIn.equals(codeCheck); }
 
 bool isAlert()
 {
@@ -238,31 +234,33 @@ void rightCode()
   whichDetect = 0;
   tone(speak, 3000, 750);
   delay(1000);
+  marie.clear();
 }
 
 void setAlarm()
 {
   marie.clear();
   marie.print("Alarm set");
-  digitalWrite(pirV, HIGH);
   PORTE = red;
   alarmState = false;
 }
 
 void tripAlarm()
 {
-
   fail = false;
   PORTE = red;
-  digitalWrite(pirV, LOW);
   tone(speak, 4000);
   delay(1000);
 }
 
 void askSet()
 {
-  marie.clear();
-  marie.print("Press * to set");
+  marie.setCursor(0,1);
+  marie.print("Push * to");
+  if(!alarmState)
+    marie.print(" disarm");
+  else
+    marie.print(" arm"); 
   while(true)
   {
     if(callie.getKey() == '*')
