@@ -9,21 +9,21 @@
 String kcode;
 String kstore;
 
-bool ARMED = false;
+volatile bool ARMED = false;
 const byte codeLength = 4;
 const byte ROWS = 4; 
 const byte COLS = 4; 
+
+// KEYPAD
 char keys[ROWS][COLS] = {
   {'1','2','3','A'},
   {'4','5','6','B'},
   {'7','8','9','C'},
   {'*','0','#','D'}
 };
-
-// KEYPAD
 byte rowPins[ROWS] = {A15, A14, A13, A12}; 
 byte colPins[COLS] = {A11, A10, A9, A8};
-Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
+Keypad keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 
 // LCD DISPLAY
 const int rs = 7;
@@ -35,57 +35,67 @@ const int d7 = 12;
 LiquidCrystal marie(rs, en, d4, d5, d6, d7);
 
 void setup(){
+  // INITIALIZE DISPLAY
   marie.begin(16, 2);
   marie.clear();
-  marie.setCursor(5,0);
-  marie.print("READY");
-  marie.setCursor(3, 1);
-  marie.print("ENTER CODE");
+
+  // LED AND BUZZER PINS OUTPUT
   pinMode(red, OUTPUT);
   pinMode(green, OUTPUT);
   pinMode(buzzer, OUTPUT);
+
+  // SET CODE FOR ARM/DISARM
+  marie.setCursor(0,0);
+  marie.print("READY");
+  marie.setCursor(0, 1);
+  marie.print("SET CODE");
+  getCode(kstore);
+  tone(buzzer, 3500, 350);
+  marie.print("CODE SET");
+  marie.setCursor(0, 1);
+  marie.print("ENTER TO ARM");
   digitalWrite(green, HIGH);
 }
   
-void loop(){
-  getCode();
+void loop()
+{
+  getCode(kcode);
   if(!kcode.equals(kstore))
   {
-    marie.setCursor(3, 0);
+    tone(buzzer, 2500, 350);
     marie.print("WRONG CODE");
-    marie.setCursor(3, 1);
+    marie.setCursor(0, 1);
     marie.print("TRY AGAIN");
     kcode.remove(0, codeLength);
   }
   else
   {
-    marie.setCursor(3, 0);
+    tone(buzzer, 3500, 350);
     marie.print("RIGHT CODE");
-    marie.setCursor(4, 1);
+    marie.setCursor(0, 1);
     kcode.remove(0, codeLength);
     changeArmState();
   }
   
 }
 
-void getCode()
+void getCode(String& code)
 {
   while(true)
   {
     char key = keypad.getKey();
-    if(key && kcode.length() < codeLength && key != '#')
+    if(key && code.length() < codeLength && key != '#')
     {
+      tone(buzzer, 3000, 100);
       marie.cursor();
       marie.clear();
-      tone(buzzer, 3000, 100);
-      kcode += key;
-      marie.print(kcode);
+      code += key;
+      marie.print(code);
     }
-    if(key == '#' && kcode.length() == codeLength)
+    if(key == '#' && code.length() == codeLength)
     {
-      if(kstore.length() == 0)
-        kstore = kcode;
       marie.clear();
+      marie.setCursor(0,0);
       marie.noCursor();
       return;
     }
@@ -113,14 +123,11 @@ void changeArmState()
 
 void motion()
 {
-  if(ARMED)
+  if(digitalRead(pir))
   {
-    if(digitalRead(pir))
-    {
-      tone(buzzer, 4000, 2000);
-      marie.clear();
-      marie.setCursor(3,0);
-      marie.print("TRIGGER ALERT!");
-    }
+    tone(buzzer, 4000, 1000);
+    marie.clear();
+    marie.setCursor(0,0);
+    marie.print("MOTION DETECTED");
   }
 }
