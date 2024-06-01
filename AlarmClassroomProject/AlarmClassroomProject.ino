@@ -1,9 +1,5 @@
-// WARNING: THE INTERRUPT MAY PREVENT CODE ENTRY DURING ARMED STATE IF THE PIR SENSOR
-// HAS TOO SHORT OF A DELAY BETWEEN SIGNAL READS
-
 #include <Keypad.h>
 #include <LiquidCrystal.h>
-#include <LiquidCrystal_I2C.h>
 
 #define green 1
 #define red 2
@@ -24,17 +20,12 @@ char keys[ROWS][COLS] = {
   {'*','0','#','D'}
 };
 
-// KEYPAD PINS
-//  FOR CLASS CIRCUIT:
+// KEYPAD
 byte rowPins[ROWS] = {A15, A14, A13, A12}; 
 byte colPins[COLS] = {A11, A10, A9, A8};
-// FOR I2C CIRCUIT:
-//byte rowPins[ROWS] = {A8, A9, A10, A11}; 
-//byte colPins[COLS] = {A12, A13, A14, A15};
-
-//LiquidCrystal_I2C marie(0x27, 16, 2);
 Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
 
+// LCD DISPLAY
 const int rs = 7;
 const int en = 8;
 const int d4 = 9;
@@ -45,8 +36,6 @@ LiquidCrystal marie(rs, en, d4, d5, d6, d7);
 
 void setup(){
   marie.begin(16, 2);
-  //marie.init();
-  //marie.backlight();
   marie.clear();
   marie.setCursor(5,0);
   marie.print("READY");
@@ -97,7 +86,6 @@ void getCode()
       if(kstore.length() == 0)
         kstore = kcode;
       marie.clear();
-      marie.setCursor(0,0);
       marie.noCursor();
       return;
     }
@@ -131,7 +119,7 @@ void motion()
     {
       tone(buzzer, 4000, 2000);
       marie.clear();
-      marie.setCursor(0,0);
+      marie.setCursor(3,0);
       marie.print("TRIGGER ALERT!");
     }
   }
