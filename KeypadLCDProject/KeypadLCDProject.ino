@@ -90,7 +90,7 @@ void loop()
     while(true)
     {
       getKeys(userIn);
-      if(!isRightCode())
+      if(!userIn.equals(codeCheck))
       {
         wrongCode();
         chances = ++chances;
@@ -120,7 +120,7 @@ void loop()
     while(true)
     {
       getKeys(userIn);
-      if(!isRightCode())
+      if(!userIn.equals(codeCheck))
       {
         wrongCode();
         continue;
@@ -133,8 +133,6 @@ void loop()
     }
   }
 }
-
-bool isRightCode(){ return userIn.equals(codeCheck); }
 
 bool isAlert()
 {
