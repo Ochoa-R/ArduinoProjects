@@ -1,5 +1,4 @@
-//If you put callie and marie together, you get calamari :D
-//#include <LiquidCrystal.h>
+// If you put callie and marie together, you get calamari :D
 #include <LiquidCrystal_I2C.h>
 #include <Keypad.h>
 
@@ -19,6 +18,10 @@ bool alarmState = true;
 bool fail = false;
 byte chances = 0;
 
+// CODE STORAGE AND COMPARE STRINGS
+String userIn;
+String codeCheck;
+
 // MISCELLANEOUS CONSTANTS
 const byte codeLength = 4;
 const byte green = 0x20;
@@ -36,25 +39,8 @@ char hexaKeys[ROWS][COLS] =
 };
 
 // KEYPAD PINS
-//  FOR I2C CIRCUIT:
 byte rowPins[ROWS] = {A8, A9, A10, A11}; 
 byte colPins[COLS] = {A12, A13, A14, A15};
-//  FOR CLASS CIRCUIT:
-//byte rowPins[ROWS] = {A15, A14, A13, A12}; 
-//byte colPins[COLS] = {A11, A10, A9, A8}; 
-
-// CODE STORAGE AND COMPARE STRINGS
-String userIn;
-String codeCheck;
-
-// LCD W/O I2C CONSTANTS & INITIALIZATION
-/*const int rs = 7;
-const int en = 8;
-const int d4 = 9;
-const int d5 = 10;
-const int d6 = 11;
-const int d7 = 12;
-LiquidCrystal marie(rs, en, d4, d5, d6, d7);*/
 
 // LCD W/ I2C & KEYPAD INITIALIZATION
 LiquidCrystal_I2C marie(0x27, 16, 2);
@@ -74,7 +60,6 @@ void beepPress();
 void setup() 
 {
   // INITIALIZE LCD DISPLAY
-  //marie.begin(16, 2);
   marie.init();
   marie.backlight();
   marie.clear();
