@@ -1,3 +1,6 @@
+// WARNING: THE INTERRUPT MAY PREVENT CODE ENTRY DURING ARMED STATE IF THE PIR SENSOR
+// READS TOO OFTEN
+
 #include <Keypad.h>
 #include <LiquidCrystal.h>
 #include <LiquidCrystal_I2C.h>
