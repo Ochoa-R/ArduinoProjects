@@ -75,8 +75,7 @@ void loop()
     marie.setCursor(0, 1);
     kcode.remove(0, codeLength);
     changeArmState();
-  }
-  
+  } 
 }
 
 void getCode(String& code)
