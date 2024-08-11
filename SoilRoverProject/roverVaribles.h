@@ -4,8 +4,8 @@ namespace Timing
   volatile unsigned long lastMove = 1;
   volatile unsigned long lastPulse = 1;
   const unsigned int readInterval = 2000;
-  const uint8_t pulseInterval = 200;
-  const uint8_t motorInterval = 10;
+  const byte pulseInterval = 200;
+  const byte motorInterval = 10;
 }
 
 namespace Pins
