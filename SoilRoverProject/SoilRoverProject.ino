@@ -2,17 +2,22 @@
   if an object gets too close to the ultrasonic ping sensor, the motor ceases sweeping
   once the object leaves the set distance, motor returns sweeping. proof of concept for
   the motors on the chassis of the rover
-  
-  TO DO: Figure out how to pulse the Ultrasonic Sensor asychronously, otherwise it messes
-  with timing of the motor and temp/hum sensor*/
+
+  TO DO:
+    Connect and configure the soil moisture sensor
+    Connect and configure the NPK Sensor*/
 
 
 #include <Adafruit_BME680.h>
+#include <NewPing.h>
 #include <NewServo.h>
 #include "roverVaribles.h"
 
 Adafruit_BME680 bmeSensor;
 NewServo servMotor(Pins::motor);
+NewPing pingSensor(Pins::trigger, Pins::echo, 400); 
+
+volatile unsigned int distance;
 
 void setup() 
 {
@@ -47,10 +52,9 @@ void setup()
 
 void loop() 
 {
-  //static bool safeDistance;
   using namespace Timing;
 
-  if((millis() - lastMove > motorInterval))// && safeDistance == true)
+  if((millis() - lastMove > motorInterval) && (distance > 15))
   {
     moveMotor();
     lastMove = millis();
@@ -73,11 +77,11 @@ void loop()
     lastRead = millis();
   }
 
-  /*if(millis() - lastPulse > pulseInterval)
+  if(millis() - lastPulse > pulseInterval)
   {
-    unsigned int distanceCm = pulseRead() / 29 / 2;
-    (distanceCm < 15) ? (safeDistance = false) : (safeDistance = true);
-  }*/
+    pingSensor.ping_timer(pulseCheck);
+    lastPulse = millis();
+  }
 }
 
 void printReading()
@@ -106,11 +110,10 @@ void moveMotor()
   servMotor.move(motorPos);
 }
 
-unsigned long pulseRead()
+void pulseCheck(unsigned int& dist)
 {
-  digitalWrite(Pins::trigger, HIGH);
-  delayMicroseconds(1000);
-  digitalWrite(Pins::trigger, LOW);
-
-  return pulseIn(Pins::echo, HIGH);
+  if(pingSensor.check_timer())
+  {
+    distance = pingSensor.ping_result / US_ROUNDTRIP_CM;
+  }
 }
