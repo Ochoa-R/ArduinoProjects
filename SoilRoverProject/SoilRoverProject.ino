@@ -110,7 +110,7 @@ void moveMotor()
   servMotor.move(motorPos);
 }
 
-void pulseCheck(unsigned int& dist)
+void pulseCheck()
 {
   if(pingSensor.check_timer())
   {
