@@ -8,9 +8,9 @@
     Connect and configure the NPK Sensor*/
 
 
-#include <Adafruit_BME680.h>
-#include <NewPing.h>
+#include "Adafruit_BME680.h"
 #include <NewServo.h>
+#include "NewPing.h"
 #include "roverVaribles.h"
 
 Adafruit_BME680 bmeSensor;
@@ -28,6 +28,7 @@ void setup()
 
   pinMode(trigger, OUTPUT);
   pinMode(echo, INPUT);
+  pinMode(water, INPUT);
 
   servMotor.setMax(170);
   servMotor.setMin(10);
@@ -82,6 +83,12 @@ void loop()
     pingSensor.ping_timer(pulseCheck);
     lastPulse = millis();
   }
+
+  if(millis() - lastWater > waterInterval)
+  {
+    checkWater();
+    lastWater = millis();
+  }
 }
 
 void printReading()
@@ -110,10 +117,24 @@ void moveMotor()
   servMotor.move(motorPos);
 }
 
-void pulseCheck()
+void pulseCheck(unsigned int& dist)
 {
   if(pingSensor.check_timer())
   {
-    distance = pingSensor.ping_result / US_ROUNDTRIP_CM;
+    if(pingSensor.ping_result == 0)
+    {
+      distance = 400;
+    }
+    else
+    {
+      distance = pingSensor.ping_result / US_ROUNDTRIP_CM;
+    }
   }
+}
+
+void checkWater()
+{
+  const unsigned int waterLevel = analogRead(Pins::water);
+  Serial.print("Water level: ");
+  Serial.println(waterLevel);
 }
