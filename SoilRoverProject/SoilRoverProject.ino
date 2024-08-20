@@ -1,21 +1,18 @@
 /*Reads temperature and humidity every 2 seconds while a servo motor sweeps back and forth
   if an object gets too close to the ultrasonic ping sensor, the motor ceases sweeping
   once the object leaves the set distance, motor returns sweeping. proof of concept for
-  the motors on the chassis of the rover
-
-  TO DO:
-    Connect and configure the soil moisture sensor
-    Connect and configure the NPK Sensor*/
-
+  the motors on the chassis of the rover*/
 
 #include "Adafruit_BME680.h"
 #include <NewServo.h>
-#include "NewPing.h"
-#include "roverVaribles.h"
+#include <NewPing.h>
+#include "rover.h"
+#include "NPK.h"
 
 Adafruit_BME680 bmeSensor;
 NewServo servMotor(Pins::motor);
 NewPing pingSensor(Pins::trigger, Pins::echo, 400); 
+NPK npkSense(Pins::RE, Pins::DE, Pins::RO, Pins::DI);
 
 volatile unsigned int distance;
 
@@ -29,6 +26,7 @@ void setup()
   pinMode(trigger, OUTPUT);
   pinMode(echo, INPUT);
   pinMode(water, INPUT);
+  pinMode(toggle, INPUT_PULLUP);
 
   servMotor.setMax(170);
   servMotor.setMin(10);
@@ -46,6 +44,8 @@ void setup()
   bmeSensor.setIIRFilterSize(BME680_FILTER_SIZE_3);
   bmeSensor.setGasHeater(320, 150);
 
+  npkSense.begin();
+
   servMotor.begin();
   servMotor.goInit();
   Serial.println("All good!");
@@ -53,88 +53,14 @@ void setup()
 
 void loop() 
 {
-  using namespace Timing;
-
-  if((millis() - lastMove > motorInterval) && (distance > 15))
+  if(digitalRead(Pins::toggle) == 0)
   {
-    moveMotor();
-    lastMove = millis();
+    pinMode(Pins::motor, OUTPUT);
+    moving();
   }
-
-  if(bmeSensor.beginReading() == 0)
+  else
   {
-    Serial.println("reading failed to begin.");
-    return;
+    pinMode(Pins::motor, INPUT_PULLUP);
+    stopped();
   }
-
-  if(millis() - lastRead > readInterval)
-  {
-    if(!bmeSensor.endReading())
-    {
-      Serial.println("reading failed to end.");
-      return;
-    } 
-    printReading();
-    lastRead = millis();
-  }
-
-  if(millis() - lastPulse > pulseInterval)
-  {
-    pingSensor.ping_timer(pulseCheck);
-    lastPulse = millis();
-  }
-
-  if(millis() - lastWater > waterInterval)
-  {
-    checkWater();
-    lastWater = millis();
-  }
-}
-
-void printReading()
-{
-  Serial.print("Temperature: ");
-  Serial.print(bmeSensor.temperature * 1.8 + 32);
-  Serial.println(" *F");
-
-  Serial.print("Humidity: ");
-  Serial.print(bmeSensor.humidity);
-  Serial.println(" %");
-}
-
-void moveMotor()
-{
-  static bool sweepFlag = true; 
-  static byte motorPos = 90;
-
-  if(motorPos >= 170)
-    sweepFlag = false;
-  if(motorPos <= 10)
-    sweepFlag = true;
-  
-  sweepFlag ? (++motorPos) : (--motorPos);
-  
-  servMotor.move(motorPos);
-}
-
-void pulseCheck(unsigned int& dist)
-{
-  if(pingSensor.check_timer())
-  {
-    if(pingSensor.ping_result == 0)
-    {
-      distance = 400;
-    }
-    else
-    {
-      distance = pingSensor.ping_result / US_ROUNDTRIP_CM;
-    }
-  }
-}
-
-void checkWater()
-{
-  const unsigned int waterLevel = analogRead(Pins::water);
-  Serial.print("Water level: ");
-  Serial.println(waterLevel);
 }
