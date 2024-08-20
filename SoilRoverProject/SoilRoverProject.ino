@@ -1,7 +1,6 @@
-/*Reads temperature and humidity every 2 seconds while a servo motor sweeps back and forth
-  if an object gets too close to the ultrasonic ping sensor, the motor ceases sweeping
-  once the object leaves the set distance, motor returns sweeping. proof of concept for
-  the motors on the chassis of the rover*/
+/*While in a moving state, motor sweeps back and forth unless Ultrasonic Ping Sensor detects an object getting
+too close. While in stopped state, reads a temperature and humidity, water, and NPK Sensor. 3-Pin Toggle switch 
+is used to switch between the two states in the prototype stage*/
 
 #include "Adafruit_BME680.h"
 #include <NewServo.h>
