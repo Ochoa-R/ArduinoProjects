@@ -1,3 +1,6 @@
+/*Functions made using code from Puneeth Kumar
+  https://www.makerguides.com/arduino-uno-and-npk-sensor-project/#Links*/
+
 #include "NPK.h"
 
 NPK::NPK(byte pinDE, byte pinRE, byte pinRO, byte pinDI)
