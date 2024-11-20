@@ -57,7 +57,7 @@ bool getPlayerIn()
   for(byte count{0};count < 4;++count)
   {
     byte tilt{};
-    unsigned int timer{millis() + timeLimit};
+    unsigned long timer{millis() + timeLimit};
     while(true)
     {
       if(millis() > timer)
