@@ -18,6 +18,7 @@ const byte stickX{A9};
 // Game conditions
 //volatile bool gameState{false};
 //volatile bool winState{false};
+const unsigned int timeLimit{3000};
 
 // Game storage
 volatile Directions pattern[4] = {};
@@ -45,7 +46,7 @@ void createPattern()
 {
   for(byte count{0};count < 4;++count)
   {
-    byte pick = LEDs[random(0,3)];
+    byte pick = LEDs[random(0,4)];
     blinkLED(pick);
     pattern[count] = pick;
   }
@@ -55,16 +56,25 @@ bool getPlayerIn()
 {
   for(byte count{0};count < 4;++count)
   {
-    Directions direction{moveCheck()};
-    if(direction != none)
+    byte tilt{};
+    unsigned int timer{millis() + timeLimit};
+    while(true)
     {
-      blinkLED(direction);
-      playerInput[count] = direction;
-      if(playerInput[count] != pattern[count])
+      if(millis() > timer)
         return false;
-      while(moveCheck() != none)
-        ;
+      if(moveCheck() != none)
+      {
+        tilt = moveCheck();
+        break;
+      }
+      continue;
     }
+    blinkLED(tilt);
+    playerInput[count] = tilt;
+    if(playerInput[count] != pattern[count])
+      return false;
+    while(moveCheck() != none)
+      ;
   }
   return true; 
 }
