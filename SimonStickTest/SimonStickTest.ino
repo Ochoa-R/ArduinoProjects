@@ -40,6 +40,7 @@ void loop()
   else
     for(byte count{0};count < 3;++count)
       blinkLED(loseLight);
+  clearPattern();
 }
 
 void createPattern()
@@ -49,6 +50,15 @@ void createPattern()
     byte pick = LEDs[random(0,4)];
     blinkLED(pick);
     pattern[count] = pick;
+  }
+}
+
+void clearPattern()
+{
+  for(byte count{0};count < 4;++count)
+  {
+    pattern[count] = 0;
+    playerInput[count] = 0;
   }
 }
 
