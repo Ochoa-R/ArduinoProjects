@@ -7,9 +7,14 @@ enum Directions
   down = A3,
   none = 0
 };
-const Directions LEDs[] = {left, up, right, down};
+const Directions LEDs[4] = {left, up, right, down};
 const byte winLight{A6};
 const byte loseLight{A7};
+
+//  LED Delays
+const unsigned long winBlink{100};
+const unsigned long inBlink{150};
+const unsigned long patBlink{300};
 
 // Stick
 const byte stickY{A8};
@@ -17,12 +22,13 @@ const byte stickX{A9};
 
 // Game conditions
 //volatile bool gameState{false};
-//volatile bool winState{false};
+volatile bool winState{};
 const unsigned int timeLimit{3000};
+const byte stageLimit{8};
 
 // Game storage
-volatile Directions pattern[4] = {};
-volatile Directions playerInput[4] = {};
+volatile Directions pattern[stageLimit] = {};
+volatile Directions playerInput[stageLimit] = {};
 
 void setup() 
 {
@@ -33,38 +39,57 @@ void setup()
 
 void loop() 
 {
-  createPattern();
-  if(getPlayerIn())
-    for(byte count{0};count < 3;++count)
-      blinkLED(winLight);
+  winState = true;
+  byte lossCount{0};
+  for(byte stage{4};stage <= stageLimit;)
+  {
+    createPattern(stage);
+    if(getPlayerIn(stage))
+    {
+      stage = ++stage;
+      blinkLED(winLight, 2, winBlink);
+    }
+    else
+    {
+      blinkLED(loseLight, 2, winBlink);
+      lossCount += 1;
+    }
+    clearPattern(stage);
+    if(lossCount >= 3)
+    {
+      winState = false;
+      break;
+    }
+  }
+  delay(500);
+  if(!winState)
+    blinkLED(loseLight, 4, winBlink);
   else
-    for(byte count{0};count < 3;++count)
-      blinkLED(loseLight);
-  clearPattern();
+    blinkLED(winLight, 4, winBlink);
 }
 
-void createPattern()
+void createPattern(byte currentStage)
 {
-  for(byte count{0};count < 4;++count)
+  for(byte count{0};count < currentStage;++count)
   {
     byte pick = LEDs[random(0,4)];
-    blinkLED(pick);
+    blinkLED(pick, 1, patBlink);
     pattern[count] = pick;
   }
 }
 
-void clearPattern()
+void clearPattern(byte currentStage)
 {
-  for(byte count{0};count < 4;++count)
+  for(byte count{0};count < currentStage;++count)
   {
     pattern[count] = 0;
     playerInput[count] = 0;
   }
 }
 
-bool getPlayerIn()
+bool getPlayerIn(byte currentStage)
 {
-  for(byte count{0};count < 4;++count)
+  for(byte count{0};count < currentStage;++count)
   {
     byte tilt{};
     unsigned long timer{millis() + timeLimit};
@@ -79,7 +104,7 @@ bool getPlayerIn()
       }
       continue;
     }
-    blinkLED(tilt);
+    blinkLED(tilt, 1, inBlink);
     playerInput[count] = tilt;
     if(playerInput[count] != pattern[count])
       return false;
@@ -89,11 +114,15 @@ bool getPlayerIn()
   return true; 
 }
 
-void blinkLED(Directions pin)
+void blinkLED(Directions pin, byte blinkTimes, unsigned long time)
 {
-  digitalWrite(pin, HIGH);
-  delay(200);
-  digitalWrite(pin, LOW);
+  for(byte count{0};count < blinkTimes;++count)
+  {
+    digitalWrite(pin, HIGH);
+    delay(time);
+    digitalWrite(pin, LOW);
+    delay(time);
+  }
 }
 
 Directions moveCheck()
