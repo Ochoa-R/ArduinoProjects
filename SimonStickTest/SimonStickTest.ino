@@ -12,19 +12,27 @@ const byte winLight{A6};
 const byte loseLight{A7};
 
 //  LED Delays
-const unsigned long winBlink{100};
-const unsigned long inBlink{150};
-const unsigned long patBlink{300};
+const byte winBlink{100};
+const byte inBlink{150};
+unsigned int patBlink{};
 
 // Stick
 const byte stickY{A8};
 const byte stickX{A9};
+const byte stickButt{A10};
 
 // Game conditions
 //volatile bool gameState{false};
+enum Difficulty
+{
+  easy = 1,
+  medium = 2,
+  hard = 3
+};
+Difficulty difficulty[3] = {easy, medium, hard};
 volatile bool winState{};
-const unsigned int timeLimit{3000};
-const byte stageLimit{8};
+unsigned int timeLimit{};
+const byte stageLimit{7};
 
 // Game storage
 volatile Directions pattern[stageLimit] = {};
@@ -33,20 +41,23 @@ volatile Directions playerInput[stageLimit] = {};
 void setup() 
 {
   DDRK = 0x00;
+  PORTK = 0x04;
   DDRF = 0xFF;
-  Serial.begin(9600);
+  Serial.begin(115200);
 }
 
 void loop() 
 {
+  difficultySelect();
   winState = true;
   byte lossCount{0};
-  for(byte stage{4};stage <= stageLimit;)
+  for(byte stage{4};stage < stageLimit;)
   {
+    Serial.println(stage);
     createPattern(stage);
     if(getPlayerIn(stage))
     {
-      stage = ++stage;
+      ++stage;
       blinkLED(winLight, 2, winBlink);
     }
     else
@@ -63,9 +74,14 @@ void loop()
   }
   delay(500);
   if(!winState)
+  {
     blinkLED(loseLight, 4, winBlink);
+  }
   else
+  {
     blinkLED(winLight, 4, winBlink);
+  }
+  delay(500);
 }
 
 void createPattern(byte currentStage)
@@ -93,6 +109,11 @@ bool getPlayerIn(byte currentStage)
   {
     byte tilt{};
     unsigned long timer{millis() + timeLimit};
+    while(moveCheck() != none)
+    {
+      if(millis() > timer)
+        return false;
+    }
     while(true)
     {
       if(millis() > timer)
@@ -108,8 +129,6 @@ bool getPlayerIn(byte currentStage)
     playerInput[count] = tilt;
     if(playerInput[count] != pattern[count])
       return false;
-    while(moveCheck() != none)
-      ;
   }
   return true; 
 }
@@ -128,36 +147,82 @@ void blinkLED(Directions pin, byte blinkTimes, unsigned long time)
 Directions moveCheck()
 {
   if(analogRead(stickX) >= 600)
+  {
+    delay(10);
     return right;
+  }
   if(analogRead(stickX) <= 60)
+  {
+    delay(10);
     return left;
+  }
   if(analogRead(stickY) >= 600)
+  {
+    delay(10);
     return down;
+  }
   if(analogRead(stickY) <= 60)
+  {
+    delay(10);
     return up;
+  }
   return none; 
 }
 
-/*void printStickReading(Directions way)
+void difficultySelect()
 {
-  switch(way)
+  Difficulty selection{easy};
+  byte count{0};
+  while(true)
   {
-    case left:
-      Serial.println("left");
-      return;
-    case right:
-      Serial.println("right");
-      return;
-    case up:
-      Serial.println("up");
-      return;
-    case down:
-      Serial.println("down");
-      return;
-    default:
-      Serial.println("error: no read");
-      return;
+    if(digitalRead(stickButt) == 0)
+      break;
+    if((moveCheck() == left) && (count > 0))
+    {
+      count -= 1;
+      selection = difficulty[count];
+      while(moveCheck() != none)
+      ; 
+    }
+    if((moveCheck() == right) && (count < 2))
+    {
+      count += 1;
+      selection = difficulty[count];
+      while(moveCheck() != none)
+      ; 
+    }
+    switch(selection)
+    {
+      case easy:
+        digitalWrite(winLight, HIGH);
+        digitalWrite(loseLight, LOW);
+        break;
+      case medium: 
+        digitalWrite(winLight, LOW);
+        digitalWrite(loseLight, HIGH);
+        break;
+      case hard:
+        digitalWrite(winLight, HIGH);
+        digitalWrite(loseLight, HIGH);
+        break;
+    }
   }
-}*/
+  clearLEDs();
+  switch(selection)
+  {
+    case easy:
+      patBlink = 300;
+      timeLimit = 3000;
+      return;
+    case medium:
+      patBlink = 250;
+      timeLimit = 2500;
+      return;
+    case hard:
+      patBlink = 200;
+      timeLimit = 2000;
+      return; 
+  }
+}
 
-// void clearGameLEDs() { PORTF &= 0xF0; }
+void clearLEDs() { PORTF &= 0x00; }
